@@ -1,80 +1,65 @@
 import * as THREE from 'three';
-import { addText, addTextToCanvas, canvas } from './ts/canvas';
+import {
+  addTextToCanvas, canvas, clearCanvas, ctx,
+} from './ts/canvas';
 import { makeScreenMaterial } from './ts/material';
-import { getOtherMeshes, getScreenMesh, screenModel } from './ts/meshes';
+import { getScreenMesh, modifyNonScreenMeshes, screenModel } from './ts/meshes';
 import { initialiseScene } from './ts/scene';
-import { loadBackgroundTexture, loadMaskTexture, loadShaderSource } from './ts/texture';
-import { interpretKeyEvent } from './ts/userInput';
+import { loadAllTextures, loadShaderFragments } from './ts/texture';
+import { handleKeyEvent } from './ts/userInput';
 
 const { scene, camera, renderer } = initialiseScene();
 
-let text = 'All work and no play makes Jack a dull boy';
+const screenData = {
+  text: [''],
+  currentRow: 0,
+  maxLength: 66,
+  rows: 18,
+};
 
-window.addEventListener('keypress', (event) => {
-  text += interpretKeyEvent(event);
+for (let i = 0; i < screenData.rows; i++) {
+  screenData.text.push('');
+}
+
+screenData.text.forEach((text: string, i: number) => {
+  if (i === screenData.currentRow) { text += '_'; }
+  addTextToCanvas(text, i);
 });
 
-const screenMesh = getScreenMesh(screenModel, 'Glass');
-const otherMeshes = getOtherMeshes(screenModel, 'Glass');
-otherMeshes.forEach((mesh) => {
-  if (mesh.name.includes('Case')) {
-    // Actually a group of meshes
-    console.log(mesh);
-    mesh.children.forEach((plane) => {
-      plane.receiveShadow = true;
-    });
-  }
-  if (mesh.name.includes('dial') || mesh.name.includes('Power')) {
-    console.log(mesh);
-    mesh.castShadow = true;
-  }
+window.addEventListener('keydown', (event) => {
+  handleKeyEvent(event, screenData);
+  clearCanvas(ctx);
+  screenData.text.forEach((text: string, i: number) => {
+    let thisRowText = screenData.text[i];
+    if (i === screenData.currentRow) { thisRowText += '_'; }
+    addTextToCanvas(thisRowText, i);
+  });
+
+  // TODO: redraw all text rows in relative position as a function each refresh
+  // Increment row on enter
+  // Remove char from current row on backspace
+  // Stick all this in a separate file!
 });
 
-const [
-  maskTexture,
-  screenPrologFragment,
-  screenEmissiveFragment,
-  screenEpilogFragment,
-  backgroundTexture,
-] = await Promise.all(
-  [
-    loadMaskTexture(),
-    loadShaderSource('./src/assets/textureMaps/screen_prolog.glsl'),
-    loadShaderSource('./src/assets/textureMaps/screen_emissive.glsl'),
-    loadShaderSource('./src/assets/textureMaps/screen_epilog.glsl'),
-    loadBackgroundTexture('./src/assets/background/equirectangular-bg.jpeg', renderer, scene),
-  ],
-);
+const textures = await loadAllTextures(renderer, scene);
+const shaderFragments = await loadShaderFragments();
+
 const canvasTexture = new THREE.CanvasTexture(canvas);
 canvasTexture.flipY = false;
 
+const screenMesh = getScreenMesh(screenModel, 'Glass');
+modifyNonScreenMeshes(screenModel, 'Glass', textures);
 const material = makeScreenMaterial(
-  maskTexture,
-  screenPrologFragment,
-  screenEmissiveFragment,
-  screenEpilogFragment,
+  textures,
+  shaderFragments,
   canvasTexture,
-  backgroundTexture,
 );
 screenMesh.material = material;
 
-for (let i = 0; i < 20; i++) {
-  setTimeout(() => { addTextToCanvas(i, text); }, i * 1000);
-}
-
 const animate = () => {
   requestAnimationFrame(animate);
-  // gltf.scene.rotation.y += 0.005;
-  // eslint-disable-next-line no-plusplus
-  // addText(text);
+  // scene.rotation.y += 0.005;
   canvasTexture.needsUpdate = true;
-  // if (gltfMesh && (gltfMesh as THREE.Mesh).material && (gltfMesh as THREE.Mesh).material.map) {
-  //   console.log("updating");
-  //   gltfMesh.
-  //   (gltfMesh as THREE.Mesh).material.map.needsUpdate = true;
-  // }
-  // cube.rotation.x += 0.01;
-  // cube.rotation.y += 0.01;
   renderer.render(scene, camera);
 };
 

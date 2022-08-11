@@ -6,11 +6,13 @@ export const addLighting = (scene: THREE.Scene) => {
   // light.castShadow = true;
   // scene.add(light);
 
-  const ambientLight = new THREE.AmbientLight(0x404040, 1); // soft white light
+  // const ambientLight = new THREE.AmbientLight(0x404040, 0.2); // soft white light
+  const ambientLight = new THREE.HemisphereLight(0x444440, 0x000044, 0.9); // soft white light
+
   scene.add(ambientLight);
 
   const color = 0xffffff;
-  const intensity = 1.5;
+  const intensity = 0.8;
   const directionalLight = new THREE.DirectionalLight(color, intensity);
 
   // Set up shadow properties for the light
@@ -19,7 +21,7 @@ export const addLighting = (scene: THREE.Scene) => {
   directionalLight.shadow.camera.near = 0.5; // default
   directionalLight.shadow.camera.far = 5; // default
   directionalLight.castShadow = true;
-  directionalLight.position.set(0, 2, 0.5);
+  directionalLight.position.set(0.5, 2, 1);
   directionalLight.target.position.set(0, 0, 0);
   directionalLight.shadow.camera.left = -4;
   directionalLight.shadow.camera.right = 4;
@@ -35,6 +37,6 @@ export const addLighting = (scene: THREE.Scene) => {
   // directionalLight2.castShadow = true;
   // directionalLight.target.position.set(0, 0, 0);
   scene.add(directionalLight2);
-  const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
-  scene.add(helper);
+  // const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+  // scene.add(helper);
 };
