@@ -27,5 +27,7 @@ module.exports = {
     'no-shadow': 'off',
     'no-plusplus': 'off',
     'no-param-reassign': 'off',
+    'lines-between-class-members': 'off',
+    'no-unused-vars': ['error', { args: 'none' }],
   },
 };

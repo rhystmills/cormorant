@@ -1,44 +1,23 @@
 import * as THREE from 'three';
 import {
-  addTextToCanvas, canvas, clearCanvas, ctx,
+ canvas, ctx, redrawCanvas,
 } from './ts/canvas';
 import { makeScreenMaterial } from './ts/material';
 import { getScreenMesh, modifyNonScreenMeshes, screenModel } from './ts/meshes';
 import { initialiseScene } from './ts/scene';
 import { loadAllTextures, loadShaderFragments } from './ts/texture';
 import { handleKeyEvent } from './ts/userInput';
+import { View } from './ts/view';
 
 const { scene, camera, renderer } = initialiseScene();
 
-const screenData = {
-  text: [''],
-  currentRow: 0,
-  maxLength: 66,
-  rows: 18,
-};
+const view = new View(66, 18);
 
-for (let i = 0; i < screenData.rows; i++) {
-  screenData.text.push('');
-}
-
-screenData.text.forEach((text: string, i: number) => {
-  if (i === screenData.currentRow) { text += '_'; }
-  addTextToCanvas(text, i);
-});
+redrawCanvas(ctx, view);
 
 window.addEventListener('keydown', (event) => {
-  handleKeyEvent(event, screenData);
-  clearCanvas(ctx);
-  screenData.text.forEach((text: string, i: number) => {
-    let thisRowText = screenData.text[i];
-    if (i === screenData.currentRow) { thisRowText += '_'; }
-    addTextToCanvas(thisRowText, i);
-  });
-
-  // TODO: redraw all text rows in relative position as a function each refresh
-  // Increment row on enter
-  // Remove char from current row on backspace
-  // Stick all this in a separate file!
+  handleKeyEvent(event, view);
+  redrawCanvas(ctx, view);
 });
 
 const textures = await loadAllTextures(renderer, scene);
