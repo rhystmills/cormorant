@@ -1,98 +1,93 @@
-import { stringForEach } from "./helpers";
-
-const getTextRows = (rows: number) => {
-  const text = [];
-  for (let i = 0; i < rows; i++) {
-    text.push('');
-  }
-  return text;
-};
+import { Block } from './block';
+import { CommandHandler, createCommandRunner } from './commandHandler';
 
 export class View {
-  maxLength: number;
-  rows: number;
-  private currentRow: number;
-  private text: string[];
-  private permittedChars: string;
-  private upperPermittedChars: string;
+  display: Block;
+  commandLine: Block;
 
-  constructor(maxLength: number, rows: number) {
-    this.maxLength = maxLength;
-    this.rows = rows;
-    this.currentRow = 0;
-    this.text = getTextRows(rows);
-    this.permittedChars = "abcdefghijklmnopqrstuvwxyz.,?!:;|'[]+=-_!@£$%^&*() ";
-    this.upperPermittedChars = this.permittedChars.toUpperCase();
-    // Bottom row should be for typing commands!
-  }
-
-  addChar(char: string) {
-    if (!this.rowIsFull()) {
-      if (this.charIsPermitted(char)) {
-        this.text[this.currentRow] += char;
-      }
-    } else {
-      this.goToNextRow();
-      this.addChar(char);
-    }
-  }
-
-  charIsPermitted(char: string) {
-    return this.permittedChars.includes(char) || this.upperPermittedChars.includes(char);
-  }
-
-  addText(text: string) {
-    stringForEach(text, (char) => {
-      this.addChar(char);
-    });
-  }
-
-  goToNextRow() {
-    if (this.currentRow >= this.rows - 1) {
-      this.shiftRowsUp();
-    } else this.currentRow++;
-  }
-
-  goToPreviousRow() {
-    if (this.currentRow > 0) {
-      this.currentRow--;
-    }
-  }
-
-  shiftRowsUp() {
-    this.text.shift();
-    this.text.push('');
-    console.log(this.currentRow)
-    console.log(this.text)
+  constructor() {
+    this.display = new Block(66, 17, true);
+    this.commandLine = new Block(66, 1, false);
   }
 
   removeChar() {
-    if (this.rowIsEmpty() && this.currentRow > 0) {
-      this.goToPreviousRow();
-      this.removeChar();
-    } else {
-      const newText = this.text[this.currentRow].slice(0, -1);
-      this.text[this.currentRow] = newText;
-    }
+    this.commandLine.removeChar();
   }
 
-  getCurrentRowText() {
-    return this.text[this.currentRow];
-  }
-
-  rowIsFull() {
-    return this.getCurrentRowText().length >= this.maxLength;
-  }
-
-  rowIsEmpty() {
-    return this.text[this.currentRow] === '';
+  addChar(char: string) {
+    this.commandLine.addChar(char);
   }
 
   getText() {
-    return this.text;
+    return [...this.display.getText(), this.commandLine.getText()];
   }
 
-  getCurrentRow() {
-    return this.currentRow;
+  getCommandLineRow() {
+    return this.display.getRows();
+  }
+
+  lowLevelCommandHandlers: CommandHandler[] = [
+    {
+      name: 'backspace',
+      handler: () => {
+        this.commandLine.removeChar();
+      },
+    },
+    {
+      name: 'submit',
+      handler: () => {
+        const cliCommand = this.commandLine.getText()[0];
+        this.commandLine.clearRow();
+        this.parseCliCommand(cliCommand);
+      },
+    },
+    {
+      name: 'addChar',
+      handler: (payload) => {
+        if (payload) {
+          this.commandLine.addChar(payload as string);
+        }
+      },
+    },
+  ];
+
+  cliCommandHandlers: CommandHandler[] = [
+    {
+      name: 'print',
+      handler: (payload) => { this.display.printLine(payload as string); },
+    },
+    {
+      name: 'help',
+      handler: () => {
+        this.display.printLine('Welcome to Cormorant. Supported commands:');
+        this.display.printLine('- help');
+        this.display.printLine('- print [text]');
+      },
+    },
+  ];
+
+  commandHandlers = [...this.lowLevelCommandHandlers, ...this.cliCommandHandlers];
+
+  commandRunner = createCommandRunner<unknown>(
+    this.commandHandlers,
+  );
+
+  parseCliCommand(cliCommand: string) {
+    const request = cliCommand.includes(' ') ? {
+      name: cliCommand.substring(0, cliCommand.indexOf(' ')),
+      payload: cliCommand.substring(cliCommand.indexOf(' ') + 1),
+    } : {
+      name: cliCommand,
+    };
+
+    this.display.printLine(`> ${cliCommand}`);
+
+    if (this.cliCommandHandlers.find(
+      (commandHandler) => commandHandler.name === request.name,
+    )) {
+      this.commandRunner(request);
+    } else {
+      this.display.printLine(`Command '${request.name}' not recognised`);
+    }
   }
 }

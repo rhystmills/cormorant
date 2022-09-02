@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import * as THREE from 'three';
 import { Texture } from 'three';
 

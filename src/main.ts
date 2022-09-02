@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {
- canvas, ctx, redrawCanvas,
+  canvas, ctx, redrawCanvas,
 } from './ts/canvas';
 import { makeScreenMaterial } from './ts/material';
 import { getScreenMesh, modifyNonScreenMeshes, screenModel } from './ts/meshes';

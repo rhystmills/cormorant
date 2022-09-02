@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WebGLRenderer } from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { addLighting } from './lighting';
 import { screenModel } from './meshes';
 
@@ -41,6 +42,7 @@ const {
 
 const getCamera = () => {
   const camera = new THREE.PerspectiveCamera(fov, aspectRatio, minDrawDistance, maxDrawDistance);
+
   camera.position.z = cameraPositionZ;
   camera.position.y = cameraPositionY;
   camera.rotation.x = cameraRotationX;
@@ -57,14 +59,15 @@ export const initialiseScene = () => {
   const scene = new THREE.Scene();
   scene.add(screenModel.scene);
 
-  const camera = getCamera();
-
   screenModel.scene.rotation.y = modelRotationY;
 
   addLighting(scene);
 
   const renderer = new THREE.WebGLRenderer(rendererOptions);
   setRendererSettings(renderer);
+
+  const camera = getCamera();
+  const controls = new OrbitControls(camera, renderer.domElement);
 
   document.body.appendChild(renderer.domElement);
   return ({ scene, camera, renderer });

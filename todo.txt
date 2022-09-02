@@ -1,0 +1,3 @@
+Support text colours
+Have directories to move around
+Have programs that can take over the display

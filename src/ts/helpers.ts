@@ -3,3 +3,11 @@ export const stringForEach = (str: string, f: (char: string) => void) => {
     f(str[i]);
   }
 };
+
+export const getTextRows = (rows: number) => {
+  const text = [];
+  for (let i = 0; i < rows; i++) {
+    text.push('');
+  }
+  return text;
+};

@@ -7,7 +7,7 @@ export const addLighting = (scene: THREE.Scene) => {
   // scene.add(light);
 
   // const ambientLight = new THREE.AmbientLight(0x404040, 0.2); // soft white light
-  const ambientLight = new THREE.HemisphereLight(0x444440, 0x000044, 0.9); // soft white light
+  const ambientLight = new THREE.HemisphereLight(0x404040, 0x040303, 0.9); // soft white light
 
   scene.add(ambientLight);
 
